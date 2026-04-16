@@ -1,7 +1,6 @@
-import React, { useRef, useState } from 'react';
+﻿import React, { useRef, useState } from 'react';
 
 export default function UploadSection({ activeTab, switchTab, contents, publishContent, deleteContent, previewContent, showToast }) {
-  // Video State
   const [videoFile, setVideoFile] = useState(null);
   const [videoProgress, setVideoProgress] = useState(0);
   const [showVideoForm, setShowVideoForm] = useState(false);
@@ -11,7 +10,15 @@ export default function UploadSection({ activeTab, switchTab, contents, publishC
   const videoDescRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Blog State
+  const [audioFile, setAudioFile] = useState(null);
+  const [audioProgress, setAudioProgress] = useState(0);
+  const [showAudioForm, setShowAudioForm] = useState(false);
+  const audioTitleRef = useRef(null);
+  const audioCatRef = useRef(null);
+  const audioDurationRef = useRef(null);
+  const audioDescRef = useRef(null);
+  const audioFileInputRef = useRef(null);
+
   const [blogImage, setBlogImage] = useState(null);
   const [blogImageName, setBlogImageName] = useState('');
   const blogTitleRef = useRef(null);
@@ -20,17 +27,14 @@ export default function UploadSection({ activeTab, switchTab, contents, publishC
   const blogEditorRef = useRef(null);
   const blogImageInputRef = useRef(null);
 
-  // Setup refs
-  const dropZoneRef = useRef(null);
-
   const handleVideoFile = (file) => {
     if (!file) return;
     if (!file.type.startsWith('video/')) {
-      showToast('❌', 'Por favor sube un archivo de video válido');
+      showToast('❌', 'Video inválido');
       return;
     }
     setVideoFile(file);
-    setVideoProgress(1); // start showing progress
+    setVideoProgress(1);
     let w = 0;
     const interval = setInterval(() => {
       w += Math.random() * 15;
@@ -39,7 +43,7 @@ export default function UploadSection({ activeTab, switchTab, contents, publishC
         clearInterval(interval);
         setTimeout(() => {
           setShowVideoForm(true);
-          showToast('✅', 'Video cargado. Completa los detalles para publicar.');
+          showToast('✅', 'Video cargado');
         }, 300);
       }
       setVideoProgress(w);
@@ -48,24 +52,10 @@ export default function UploadSection({ activeTab, switchTab, contents, publishC
 
   const submitVideo = () => {
     const title = videoTitleRef.current.value.trim();
-    if (!title) { showToast('⚠️', 'Por favor ingresa un título'); return; }
-    if (!videoFile) { showToast('⚠️', 'Por favor selecciona un video'); return; }
-
-    const item = {
-      id: Date.now(),
-      type: 'video',
-      title,
-      category: videoCatRef.current.value || 'Sin categoría',
-      duration: videoDurationRef.current.value || '?',
-      description: videoDescRef.current.value,
-      date: new Date().toLocaleDateString('es-ES'),
-      size: `${(videoFile.size / 1024 / 1024).toFixed(1)} MB`,
-      videoUrl: URL.createObjectURL(videoFile)
-    };
-
+    if (!title) { showToast('⚠️', 'Ingresa título'); return; }
+    if (!videoFile) { showToast('⚠️', 'Selecciona video'); return; }
+    const item = { id: Date.now(), type: 'video', title, category: videoCatRef.current.value || 'Sin categoría', duration: videoDurationRef.current.value || '?', description: videoDescRef.current.value, uploadDate: new Date(), date: new Date().toLocaleDateString('es-ES'), size: `${(videoFile.size / 1024 / 1024).toFixed(1)} MB`, videoUrl: URL.createObjectURL(videoFile) };
     publishContent(item);
-    
-    // Reset form
     videoTitleRef.current.value = '';
     videoCatRef.current.value = '';
     videoDurationRef.current.value = '';
@@ -74,9 +64,47 @@ export default function UploadSection({ activeTab, switchTab, contents, publishC
     setVideoFile(null);
     setVideoProgress(0);
     if(fileInputRef.current) fileInputRef.current.value = '';
-    
-    showToast('🎬', '¡Video publicado exitosamente!');
-    setTimeout(() => switchTab('contenido'), 1200);
+    setTimeout(() => switchTab('videos'), 1200);
+  };
+
+  const handleAudioFile = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('audio/')) {
+      showToast('❌', 'Audio inválido');
+      return;
+    }
+    setAudioFile(file);
+    setAudioProgress(1);
+    let w = 0;
+    const interval = setInterval(() => {
+      w += Math.random() * 15;
+      if (w >= 100) {
+        w = 100;
+        clearInterval(interval);
+        setTimeout(() => {
+          setShowAudioForm(true);
+          showToast('✅', 'Audio cargado');
+        }, 300);
+      }
+      setAudioProgress(w);
+    }, 120);
+  };
+
+  const submitAudio = () => {
+    const title = audioTitleRef.current.value.trim();
+    if (!title) { showToast('⚠️', 'Ingresa título'); return; }
+    if (!audioFile) { showToast('⚠️', 'Selecciona audio'); return; }
+    const item = { id: Date.now(), type: 'audio', title, category: audioCatRef.current.value || 'Sin categoría', duration: audioDurationRef.current.value || '?', description: audioDescRef.current.value, uploadDate: new Date(), date: new Date().toLocaleDateString('es-ES'), size: `${(audioFile.size / 1024 / 1024).toFixed(2)} MB`, audioUrl: URL.createObjectURL(audioFile) };
+    publishContent(item);
+    audioTitleRef.current.value = '';
+    audioCatRef.current.value = '';
+    audioDurationRef.current.value = '';
+    audioDescRef.current.value = '';
+    setShowAudioForm(false);
+    setAudioFile(null);
+    setAudioProgress(0);
+    if(audioFileInputRef.current) audioFileInputRef.current.value = '';
+    setTimeout(() => switchTab('audio'), 1200);
   };
 
   const handleBlogImage = (e) => {
@@ -98,24 +126,10 @@ export default function UploadSection({ activeTab, switchTab, contents, publishC
   const submitBlog = () => {
     const title = blogTitleRef.current.value.trim();
     const content = blogEditorRef.current.innerHTML.trim();
-    if (!title) { showToast('⚠️', 'Por favor ingresa un título'); return; }
-    if (!content || content === '') { showToast('⚠️', 'El contenido del blog no puede estar vacío'); return; }
-
-    const item = {
-      id: Date.now(),
-      type: 'blog',
-      title,
-      category: blogCatRef.current.value || 'Sin categoría',
-      readTime: blogTimeRef.current.value || '?',
-      content,
-      image: blogImage,
-      date: new Date().toLocaleDateString('es-ES'),
-      wordCount: content.replace(/<[^>]*>/g, '').split(/\s+/).length
-    };
-
+    if (!title) { showToast('⚠️', 'Ingresa título'); return; }
+    if (!content) { showToast('⚠️', 'Agrega contenido'); return; }
+    const item = { id: Date.now(), type: 'blog', title, category: blogCatRef.current.value || 'Sin categoría', readTime: blogTimeRef.current.value || '?', content, image: blogImage, uploadDate: new Date(), date: new Date().toLocaleDateString('es-ES'), wordCount: content.replace(/<[^>]*>/g, '').split(/\s+/).length };
     publishContent(item);
-    
-    // Reset blog
     blogTitleRef.current.value = '';
     blogCatRef.current.value = '';
     blogTimeRef.current.value = '';
@@ -123,200 +137,75 @@ export default function UploadSection({ activeTab, switchTab, contents, publishC
     if(blogImageInputRef.current) blogImageInputRef.current.value = '';
     setBlogImage(null);
     setBlogImageName('');
-    
-    showToast('✍️', '¡Blog publicado exitosamente!');
-    setTimeout(() => switchTab('contenido'), 1200);
+    setTimeout(() => switchTab('blog'), 1200);
   };
 
   return (
     <section id="upload-section" className="upload-section-bg">
       <div className="tabs-container">
-        <div className="section-tag">Gestión de Contenido</div>
-        <h2 className="section-title">Sube tu Contenido</h2>
-        <p className="section-desc">Comparte videos educativos y artículos de blog con tu comunidad de estudiantes.</p>
-
-        <div className="tabs">
-          <button className={`tab ${activeTab === 'videos' ? 'active' : ''}`} onClick={() => switchTab('videos')}>🎬 Subir Video</button>
-          <button className={`tab ${activeTab === 'blog' ? 'active' : ''}`} onClick={() => switchTab('blog')}>✍️ Crear Blog</button>
-          <button className={`tab ${activeTab === 'contenido' ? 'active' : ''}`} onClick={() => switchTab('contenido')}>📚 Mi Contenido</button>
+        <div className="section-header">
+          <h2>Sube tu Contenido</h2>
+          <p>Comparte videos, audios y blogs con tu comunidad.</p>
         </div>
-
-        {/* TAB VIDEOS */}
+        <div className="showcase-tabs">
+          <button className={`tab-btn ${activeTab === 'videos' ? 'active' : ''}`} onClick={() => switchTab('videos')}><span className="tab-icon">🎬</span><span className="tab-label">Videos</span></button>
+          <button className={`tab-btn ${activeTab === 'audio' ? 'active' : ''}`} onClick={() => switchTab('audio')}><span className="tab-icon">🎧</span><span className="tab-label">Audios</span></button>
+          <button className={`tab-btn ${activeTab === 'blog' ? 'active' : ''}`} onClick={() => switchTab('blog')}><span className="tab-icon">📝</span><span className="tab-label">Blogs</span></button>
+        </div>
         {activeTab === 'videos' && (
           <div className="tab-panel active">
-            <div 
-              className={`upload-area ${videoProgress > 0 && !showVideoForm ? 'drag-over' : ''}`} 
-              ref={dropZoneRef}
-              onClick={() => fileInputRef.current.click()}
-              onDragOver={(e) => { e.preventDefault(); dropZoneRef.current.classList.add('drag-over'); }}
-              onDragLeave={() => dropZoneRef.current.classList.remove('drag-over')}
-              onDrop={(e) => {
-                e.preventDefault();
-                dropZoneRef.current.classList.remove('drag-over');
-                handleVideoFile(e.dataTransfer.files[0]);
-              }}
-            >
+            <div className="upload-area" onClick={() => fileInputRef.current.click()} onDragOver={(e) => { e.preventDefault(); }} onDrop={(e) => { e.preventDefault(); handleVideoFile(e.dataTransfer.files[0]); }}>
               <input type="file" ref={fileInputRef} accept="video/*" onChange={(e) => handleVideoFile(e.target.files[0])} style={{ display: 'none' }} />
-              <div className="upload-icon">🎬</div>
+              <div style={{color: 'var(--blue)', margin: '0 auto 1rem', fontSize: '3rem'}}>🎬</div>
               <h3>Arrastra tu video aquí</h3>
-              <p>o haz clic para seleccionar desde tu dispositivo</p>
-              <div className="upload-types">
-                <span className="type-badge">MP4</span>
-                <span className="type-badge">MOV</span>
-                <span className="type-badge">AVI</span>
-                <span className="type-badge">MKV</span>
-                <span className="type-badge">WEBM</span>
-              </div>
-              <button 
-                className="btn-upload" 
-                onClick={(e) => { e.stopPropagation(); fileInputRef.current.click(); }}
-              >
-                Seleccionar Video
-              </button>
-              
-              <div className="progress-wrap" style={{ display: videoProgress > 0 ? 'block' : 'none' }}>
-                <div className="progress-bar" style={{ width: `${videoProgress}%` }}></div>
-              </div>
+              <p>o haz clic para seleccionar</p>
+              <button className="btn-primary-new" onClick={(e) => { e.stopPropagation(); fileInputRef.current.click(); }}>Seleccionar Video</button>
+              {videoProgress > 0 && !showVideoForm && (<div style={{ width: '100%', height: '4px', background: 'rgba(0,68,204,0.2)', borderRadius: '2px', marginTop: '1rem' }}><div style={{ width: `${videoProgress}%`, height: '100%', background: 'var(--gradient)', transition: 'width 0.2s' }}></div></div>)}
             </div>
-
             {showVideoForm && (
-              <div className="form-grid">
-                <div className="form-group full">
-                  <label>Título del Video *</label>
-                  <input type="text" ref={videoTitleRef} placeholder="Ej: Cómo crear tu primera tienda en línea" />
-                </div>
-                <div className="form-group">
-                  <label>Categoría</label>
-                  <select ref={videoCatRef}>
-                    <option value="">Seleccionar...</option>
-                    <option>Fundamentos de E-Commerce</option>
-                    <option>Marketing Digital</option>
-                    <option>SEO y Posicionamiento</option>
-                    <option>Redes Sociales</option>
-                    <option>Logística y Envíos</option>
-                    <option>Pagos y Finanzas</option>
-                    <option>Estrategias de Ventas</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Duración (min)</label>
-                  <input type="text" ref={videoDurationRef} placeholder="Ej: 15" />
-                </div>
-                <div className="form-group full">
-                  <label>Descripción</label>
-                  <textarea ref={videoDescRef} rows="3" placeholder="Describe el contenido de tu video..."></textarea>
-                </div>
-                <div className="form-group full">
-                  <button className="btn-primary" style={{ width: 'fit-content' }} onClick={submitVideo}>Publicar Video →</button>
-                </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '2rem' }}>
+                <div><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Título *</label><input type="text" ref={videoTitleRef} placeholder="Título" style={{width: '100%', padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px'}} /></div>
+                <div><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Categoría</label><select ref={videoCatRef} style={{width: '100%', padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px'}}><option>Fundamentos</option><option>Marketing</option></select></div>
+                <div><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Duración (min)</label><input type="text" ref={videoDurationRef} style={{width: '100%', padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px'}} /></div>
+                <div><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Tamaño</label><input type="text" disabled value={videoFile ? `${(videoFile.size / 1024 / 1024).toFixed(1)} MB` : ''} style={{width: '100%', padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--surface2)'}} /></div>
+                <div style={{gridColumn: '1 / -1'}}><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Descripción</label><textarea ref={videoDescRef} rows="3" style={{width: '100%', padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px', resize: 'vertical'}}></textarea></div>
+                <div style={{gridColumn: '1 / -1'}}><button className="btn-primary-new" onClick={submitVideo}>Publicar Video</button></div>
               </div>
             )}
           </div>
         )}
-
-        {/* TAB BLOG */}
+        {activeTab === 'audio' && (
+          <div className="tab-panel active">
+            <div className="upload-area" onClick={() => audioFileInputRef.current.click()} onDragOver={(e) => { e.preventDefault(); }} onDrop={(e) => { e.preventDefault(); handleAudioFile(e.dataTransfer.files[0]); }}>
+              <input type="file" ref={audioFileInputRef} accept="audio/*" onChange={(e) => handleAudioFile(e.target.files[0])} style={{ display: 'none' }} />
+              <div style={{color: 'var(--blue)', margin: '0 auto 1rem', fontSize: '3rem'}}>🎧</div>
+              <h3>Arrastra tu audio aquí</h3>
+              <p>o haz clic para seleccionar</p>
+              <button className="btn-primary-new" onClick={(e) => { e.stopPropagation(); audioFileInputRef.current.click(); }}>Seleccionar Audio</button>
+              {audioProgress > 0 && !showAudioForm && (<div style={{ width: '100%', height: '4px', background: 'rgba(0,68,204,0.2)', borderRadius: '2px', marginTop: '1rem' }}><div style={{ width: `${audioProgress}%`, height: '100%', background: 'var(--gradient)', transition: 'width 0.2s' }}></div></div>)}
+            </div>
+            {showAudioForm && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '2rem' }}>
+                <div><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Título *</label><input type="text" ref={audioTitleRef} style={{width: '100%', padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px'}} /></div>
+                <div><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Categoría</label><select ref={audioCatRef} style={{width: '100%', padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px'}}><option>Podcasts</option><option>Educación</option></select></div>
+                <div><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Duración (min)</label><input type="text" ref={audioDurationRef} style={{width: '100%', padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px'}} /></div>
+                <div><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Tamaño</label><input type="text" disabled value={audioFile ? `${(audioFile.size / 1024 / 1024).toFixed(2)} MB` : ''} style={{width: '100%', padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--surface2)'}} /></div>
+                <div style={{gridColumn: '1 / -1'}}><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Descripción</label><textarea ref={audioDescRef} rows="3" style={{width: '100%', padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px', resize: 'vertical'}}></textarea></div>
+                <div style={{gridColumn: '1 / -1'}}><button className="btn-primary-new" onClick={submitAudio}>Publicar Audio</button></div>
+              </div>
+            )}
+          </div>
+        )}
         {activeTab === 'blog' && (
           <div className="tab-panel active">
-            <div className="form-grid">
-              <div className="form-group full">
-                <label>Título del Blog *</label>
-                <input type="text" ref={blogTitleRef} placeholder="Ej: 10 Estrategias para aumentar tus ventas online" />
-              </div>
-              <div className="form-group">
-                <label>Categoría</label>
-                <select ref={blogCatRef}>
-                  <option value="">Seleccionar...</option>
-                  <option>Estrategia de Negocio</option>
-                  <option>Marketing Digital</option>
-                  <option>Experiencia del Cliente</option>
-                  <option>Tecnología</option>
-                  <option>Tendencias</option>
-                  <option>Casos de Éxito</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Tiempo de lectura (min)</label>
-                <input type="text" ref={blogTimeRef} placeholder="Ej: 5" />
-              </div>
-              <div className="form-group full">
-                <label>Imagen de portada</label>
-                <div className="upload-area" style={{ padding: '1.5rem', borderRadius: '14px' }} onClick={() => blogImageInputRef.current.click()}>
-                  <input type="file" ref={blogImageInputRef} accept="image/*" onChange={handleBlogImage} style={{ display: 'none' }} />
-                  <span>{blogImageName ? `✅ ${blogImageName}` : '📷 Haz clic para subir imagen de portada'}</span>
-                </div>
-              </div>
-              <div className="form-group full">
-                <label>Contenido del Blog *</label>
-                <div className="editor-toolbar">
-                  <button className="toolbar-btn" onClick={() => formatDoc('bold')} title="Negrita"><b>B</b></button>
-                  <button className="toolbar-btn" onClick={() => formatDoc('italic')} title="Cursiva"><i>I</i></button>
-                  <button className="toolbar-btn" onClick={() => formatDoc('underline')} title="Subrayar"><u>U</u></button>
-                  <div className="toolbar-sep"></div>
-                  <button className="toolbar-btn" onClick={() => formatDoc('insertUnorderedList')} title="Lista">≡</button>
-                  <button className="toolbar-btn" onClick={() => formatDoc('insertOrderedList')} title="Numerada">№</button>
-                  <div className="toolbar-sep"></div>
-                  <button className="toolbar-btn" onClick={() => formatDoc('justifyLeft')} title="Izquierda">⬅</button>
-                  <button className="toolbar-btn" onClick={() => formatDoc('justifyCenter')} title="Centro">↔</button>
-                  <button className="toolbar-btn" onClick={() => formatDoc('justifyRight')} title="Derecha">➡</button>
-                  <div className="toolbar-sep"></div>
-                  <button className="toolbar-btn" onClick={() => formatDoc('formatBlock', 'h2')} title="Título">H</button>
-                  <button className="toolbar-btn" onClick={() => formatDoc('formatBlock', 'p')} title="Párrafo">¶</button>
-                </div>
-                <div 
-                  className="editor-area" 
-                  ref={blogEditorRef} 
-                  contentEditable="true" 
-                  data-placeholder="Comienza a escribir tu artículo aquí..."
-                  onFocus={(e) => { if (!e.target.textContent.trim()) e.target.innerHTML = ''; }}
-                ></div>
-              </div>
-              <div className="form-group full">
-                <button className="btn-primary" style={{ width: 'fit-content' }} onClick={submitBlog}>Publicar Blog →</button>
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <div><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Título *</label><input type="text" ref={blogTitleRef} style={{width: '100%', padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px'}} /></div>
+              <div><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Categoría</label><select ref={blogCatRef} style={{width: '100%', padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px'}}><option>Estrategia</option><option>Marketing</option></select></div>
+              <div><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Lectura (min)</label><input type="text" ref={blogTimeRef} style={{width: '100%', padding: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px'}} /></div>
+              <div><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Portada</label><div className="upload-area" style={{ padding: '1.5rem', cursor: 'pointer' }} onClick={() => blogImageInputRef.current.click()}><input type="file" ref={blogImageInputRef} accept="image/*" onChange={handleBlogImage} style={{ display: 'none' }} /><span>{blogImageName ? `✅ ${blogImageName}` : '📷 Subir'}</span></div></div>
+              <div style={{gridColumn: '1 / -1'}}><label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Contenido *</label><div style={{display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', padding: '0.8rem', background: 'var(--surface2)', borderRadius: '8px', flexWrap: 'wrap'}}><button style={{padding: '0.5rem 0.8rem', background: 'var(--white)', border: '1px solid var(--border)', borderRadius: '4px', fontWeight: 'bold'}} onClick={() => formatDoc('bold')}>B</button><button style={{padding: '0.5rem 0.8rem', background: 'var(--white)', border: '1px solid var(--border)', borderRadius: '4px', fontStyle: 'italic'}} onClick={() => formatDoc('italic')}>I</button></div><div ref={blogEditorRef} contentEditable="true" style={{width: '100%', minHeight: '250px', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', backgroundColor: 'var(--white)', outline: 'none'}}></div></div>
+              <div style={{gridColumn: '1 / -1'}}><button className="btn-primary-new" onClick={submitBlog}>Publicar Blog</button></div>
             </div>
-          </div>
-        )}
-
-        {/* TAB CONTENIDO */}
-        {activeTab === 'contenido' && (
-          <div className="tab-panel active">
-            {contents.length === 0 ? (
-              <div className="empty-state">
-                <div className="icon">📭</div>
-                <p>Aún no has subido contenido.<br />¡Comienza subiendo tu primer video o blog!</p>
-              </div>
-            ) : (
-              <div className="content-grid">
-                {contents.map(c => {
-                  const isVideo = c.type === 'video';
-                  return (
-                    <div className="content-card" key={c.id}>
-                      <div className="card-thumb" style={c.image ? { backgroundImage: `url(${c.image})`, backgroundSize:'cover', backgroundPosition:'center' } : {}}>
-                        {!c.image && (isVideo ? '🎬' : '📝')}
-                        <span className="card-type">{isVideo ? 'VIDEO' : 'BLOG'}</span>
-                      </div>
-                      <div className="card-body">
-                        <div className="card-title">{c.title}</div>
-                        <div className="card-meta">
-                          <span>📂 {c.category}</span>
-                          <span>{isVideo ? `⏱ ${c.duration} min` : `📖 ${c.readTime} min`}</span>
-                          <span>📅 {c.date}</span>
-                        </div>
-                      </div>
-                      <div className="card-actions">
-                        <button className="btn-small btn-edit" onClick={() => previewContent(c)}>👁 Ver</button>
-                        <button className="btn-small btn-delete" onClick={() => {
-                          if (window.confirm('¿Seguro que deseas eliminar este contenido?')) {
-                            deleteContent(c.id);
-                            showToast('🗑', 'Contenido eliminado');
-                          }
-                        }}>🗑 Eliminar</button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </div>
         )}
       </div>
